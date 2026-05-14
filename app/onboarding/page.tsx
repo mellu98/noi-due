@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { Loader2, Users, UserPlus } from 'lucide-react';
 
 export default function OnboardingPage() {
@@ -21,8 +22,28 @@ export default function OnboardingPage() {
     setLoading(true);
     setError('');
 
-    const { data: sessionData } = await supabase.auth.getSession();
-    const user = sessionData.session?.user;
+    const token = document.cookie.match(/(?:^|;)\\s*sb-auth-token=([^;]+)/)?.[1];
+    if (!token) {
+      setError('Sessione scaduta. Effettua il login.');
+      setLoading(false);
+      router.push('/login');
+      return;
+    }
+
+    const tempClient = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        global: {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      }
+    );
+
+    const { data: userData } = await tempClient.auth.getUser();
+    const user = userData.user;
     if (!user) {
       setError('Sessione scaduta. Effettua il login.');
       setLoading(false);
@@ -32,7 +53,7 @@ export default function OnboardingPage() {
 
     const code = Math.random().toString(36).substring(2, 8).toUpperCase();
 
-    const { data: couple, error: coupleError } = await supabase
+    const { data: couple, error: coupleError } = await tempClient
       .from('couples')
       .insert({ name: coupleName, invite_code: code, created_by: user.id })
       .select()
@@ -44,7 +65,7 @@ export default function OnboardingPage() {
       return;
     }
 
-    const { error: memberError } = await supabase.from('couple_members').insert({
+    const { error: memberError } = await tempClient.from('couple_members').insert({
       couple_id: couple.id,
       user_id: user.id,
       role: 'admin',
@@ -64,8 +85,28 @@ export default function OnboardingPage() {
     setLoading(true);
     setError('');
 
-    const { data: sessionData } = await supabase.auth.getSession();
-    const user = sessionData.session?.user;
+    const token = document.cookie.match(/(?:^|;)\\s*sb-auth-token=([^;]+)/)?.[1];
+    if (!token) {
+      setError('Sessione scaduta. Effettua il login.');
+      setLoading(false);
+      router.push('/login');
+      return;
+    }
+
+    const tempClient = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        global: {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      }
+    );
+
+    const { data: userData } = await tempClient.auth.getUser();
+    const user = userData.user;
     if (!user) {
       setError('Sessione scaduta. Effettua il login.');
       setLoading(false);
@@ -73,7 +114,7 @@ export default function OnboardingPage() {
       return;
     }
 
-    const { data: couple, error: findError } = await supabase
+    const { data: couple, error: findError } = await tempClient
       .from('couples')
       .select('id')
       .eq('invite_code', inviteCode.trim().toUpperCase())
@@ -85,7 +126,7 @@ export default function OnboardingPage() {
       return;
     }
 
-    const { error: memberError } = await supabase.from('couple_members').insert({
+    const { error: memberError } = await tempClient.from('couple_members').insert({
       couple_id: couple.id,
       user_id: user.id,
       role: 'member',

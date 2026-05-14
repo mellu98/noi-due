@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import { Home, CalendarDays, Lightbulb, ImageIcon, Settings } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -15,6 +16,12 @@ const links = [
 
 export function BottomNavigation() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  useEffect(() => {
+    // Prefetch all routes on mount for instant navigation
+    links.forEach((link) => router.prefetch(link.href));
+  }, [router]);
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/80 backdrop-blur-md">
@@ -25,6 +32,7 @@ export function BottomNavigation() {
             <Link
               key={link.href}
               href={link.href}
+              prefetch={true}
               className={clsx(
                 'flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl transition-colors',
                 active ? 'text-primary' : 'text-muted-foreground hover:text-foreground'

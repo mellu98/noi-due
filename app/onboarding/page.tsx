@@ -43,28 +43,17 @@ export default function OnboardingPage() {
 
     const code = Math.random().toString(36).substring(2, 8).toUpperCase();
 
-    console.log('[ONBOARDING] Inserting couple with created_by:', user.id);
-    const { data: couple, error: coupleError } = await supabase
-      .from('couples')
-      .insert({ name: coupleName, invite_code: code, created_by: user.id })
-      .select()
-      .single();
-    console.log('[ONBOARDING] couple result:', { data: !!couple, error: coupleError?.message });
-
-    if (coupleError || !couple) {
-      setError(coupleError?.message || 'Errore nella creazione della coppia.');
-      setLoading(false);
-      return;
-    }
-
-    const { error: memberError } = await supabase.from('couple_members').insert({
-      couple_id: couple.id,
-      user_id: user.id,
-      role: 'admin',
+    console.log('[ONBOARDING] Creating couple via API...');
+    const res = await fetch('/api/couples', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: coupleName, invite_code: code, user_id: user.id }),
     });
+    const result = await res.json();
+    console.log('[ONBOARDING] API result:', { ok: res.ok, error: result.error });
 
-    if (memberError) {
-      setError(memberError.message);
+    if (!res.ok) {
+      setError(result.error || 'Errore nella creazione della coppia.');
       setLoading(false);
       return;
     }

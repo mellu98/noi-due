@@ -22,7 +22,7 @@ export default function SignupPage() {
     setLoading(true);
     setError('');
 
-    const { error } = await supabase.auth.signUp({
+    const { data: signUpData, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -37,6 +37,9 @@ export default function SignupPage() {
       return;
     }
 
+    if (signUpData.session?.access_token) {
+      document.cookie = `sb-auth-token=${signUpData.session.access_token}; path=/; SameSite=Lax; Secure`;
+    }
     router.refresh();
     router.push('/onboarding');
   }

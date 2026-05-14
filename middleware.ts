@@ -1,44 +1,31 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({
-    request: { headers: request.headers },
-  });
+  const token = request.cookies.get('sb-auth-token')?.value;
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value;
+  let user = null;
+  if (token) {
+    const supabase = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        auth: { persistSession: false, autoRefreshToken: false },
+        global: {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-        set(name: string, value: string, options: CookieOptions) {
-          request.cookies.set({ name, value, ...options });
-          response = NextResponse.next({ request: { headers: request.headers } });
-          response.cookies.set({ name, value, ...options });
-        },
-        remove(name: string, options: CookieOptions) {
-          request.cookies.set({ name, value: '', ...options });
-          response = NextResponse.next({ request: { headers: request.headers } });
-          response.cookies.set({ name, value: '', ...options });
-        },
-      },
-      cookieOptions: {
-        httpOnly: false,
-        sameSite: 'lax',
-        secure: true,
-      },
-    }
-  );
+      }
+    );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    const {
+      data: { user: u },
+    } = await supabase.auth.getUser();
+    user = u;
+  }
 
   const pathname = request.nextUrl.pathname;
-
   const publicRoutes = ['/login', '/signup'];
   const isPublic = publicRoutes.some((r) => pathname.startsWith(r));
 
@@ -50,7 +37,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
-  return response;
+  return NextResponse.next();
 }
 
 export const config = {

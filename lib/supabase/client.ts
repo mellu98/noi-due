@@ -1,33 +1,10 @@
 'use client';
 
-import { createBrowserClient } from '@supabase/ssr';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 
 export function createClient() {
-  return createBrowserClient(
+  return createSupabaseClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          if (typeof document === 'undefined') return [];
-          return document.cookie.split(';').map((c) => {
-            const [name, ...rest] = c.trim().split('=');
-            return { name, value: rest.join('=') };
-          });
-        },
-        setAll(cookiesToSet) {
-          if (typeof document === 'undefined') return;
-          cookiesToSet.forEach(({ name, value, options }) => {
-            let cookie = `${name}=${value}`;
-            if (options?.path) cookie += `; path=${options.path}`;
-            if (options?.maxAge) cookie += `; max-age=${options.maxAge}`;
-            if (options?.domain) cookie += `; domain=${options.domain}`;
-            if (options?.sameSite) cookie += `; samesite=${options.sameSite}`;
-            if (options?.secure) cookie += '; secure';
-            document.cookie = cookie;
-          });
-        },
-      },
-    }
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 }

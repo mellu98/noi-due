@@ -22,6 +22,7 @@ export default function LoginPage() {
     setError('');
 
     const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password });
+    console.log('[LOGIN] signIn result:', { error: error?.message, session: !!signInData.session, tokenPrefix: signInData.session?.access_token?.substring(0, 20) });
 
     if (error) {
       setError(error.message);
@@ -29,10 +30,6 @@ export default function LoginPage() {
       return;
     }
 
-    if (signInData.session?.access_token) {
-      document.cookie = `sb-auth-token=${signInData.session.access_token}; path=/; SameSite=Lax; Secure`;
-    }
-    router.refresh();
     router.push('/');
   }
 

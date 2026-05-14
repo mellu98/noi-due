@@ -75,26 +75,15 @@ export default function OnboardingPage() {
       return;
     }
 
-    const { data: couple, error: findError } = await supabase
-      .from('couples')
-      .select('id')
-      .eq('invite_code', inviteCode.trim().toUpperCase())
-      .single();
-
-    if (findError || !couple) {
-      setError('Codice invito non valido.');
-      setLoading(false);
-      return;
-    }
-
-    const { error: memberError } = await supabase.from('couple_members').insert({
-      couple_id: couple.id,
-      user_id: user.id,
-      role: 'member',
+    const res = await fetch('/api/couples/join', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ invite_code: inviteCode.trim().toUpperCase(), user_id: user.id }),
     });
+    const result = await res.json();
 
-    if (memberError) {
-      setError(memberError.message);
+    if (!res.ok) {
+      setError(result.error || 'Codice invito non valido.');
       setLoading(false);
       return;
     }

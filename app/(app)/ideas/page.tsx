@@ -29,18 +29,11 @@ export default function IdeasPage() {
     async function load() {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) return;
-      const { data: member } = await supabase
-        .from('couple_members')
-        .select('couple_id')
-        .eq('user_id', userData.user.id)
-        .single();
-      if (!member) return;
-      const { data } = await supabase
-        .from('date_ideas')
-        .select('*')
-        .eq('couple_id', member.couple_id)
-        .order('created_at', { ascending: false });
-      setIdeas(data ?? []);
+      const res = await fetch(`/api/ideas?user_id=${userData.user.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setIdeas(data.ideas || []);
+      }
       setLoading(false);
     }
     load();
@@ -58,9 +51,10 @@ export default function IdeasPage() {
       .single();
     if (!member) return;
 
-    const { data } = await supabase
-      .from('date_ideas')
-      .insert({
+    const res = await fetch('/api/ideas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
         couple_id: member.couple_id,
         title,
         category,
@@ -69,13 +63,15 @@ export default function IdeasPage() {
         estimated_duration: estimatedDuration || null,
         location: location || null,
         description: description || null,
-        created_by: userData.user.id,
-      })
-      .select()
-      .single();
+        user_id: userData.user.id,
+      }),
+    });
 
-    if (data) {
-      setIdeas([data, ...ideas]);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.idea) {
+        setIdeas([data.idea, ...ideas]);
+      }
       setShowForm(false);
       setTitle('');
       setEstimatedBudget('');

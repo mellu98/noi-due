@@ -29,10 +29,7 @@ export function createClient() {
     {
       global: {
         fetch: (input: RequestInfo | URL, init?: RequestInit) => {
-          const url = input.toString();
           const headers = new Headers(init?.headers);
-          const authHeader = headers.get('Authorization') || 'NONE';
-          console.log('[FETCH]', url.substring(url.lastIndexOf('/') + 1), 'auth:', authHeader.substring(0, 40));
           if (!headers.has('Authorization')) {
             const token = getTokenFromStorage();
             if (token) {

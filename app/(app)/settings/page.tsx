@@ -20,18 +20,10 @@ export default function SettingsPage() {
     async function load() {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) return;
-      const { data: member } = await supabase
-        .from('couple_members')
-        .select('couple_id')
-        .eq('user_id', userData.user.id)
-        .single();
-      if (member) {
-        const { data } = await supabase
-          .from('couples')
-          .select('*')
-          .eq('id', member.couple_id)
-          .single();
-        setCouple(data);
+      const res = await fetch(`/api/settings?user_id=${userData.user.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setCouple(data.couple);
       }
       setLoading(false);
     }

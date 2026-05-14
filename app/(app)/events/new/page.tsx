@@ -59,37 +59,28 @@ export default function NewEventPage() {
       return;
     }
 
-    const { data: event, error: eventError } = await supabase
-      .from('events')
-      .insert({
+    const res = await fetch('/api/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
         couple_id: member.couple_id,
+        user_id: userData.user.id,
         title,
         type,
         start_date: startDate,
         end_date: endDate || null,
         location: location || null,
-        budget: budget ? parseFloat(budget) : null,
+        budget: budget || null,
         description: description || null,
-        status: 'planned',
-        created_by: userData.user.id,
-      })
-      .select()
-      .single();
+        checklist: checklist.map((t) => t.trim()).filter(Boolean),
+      }),
+    });
 
-    if (eventError || !event) {
-      setError(eventError?.message || 'Errore nella creazione.');
+    const result = await res.json();
+    if (!res.ok) {
+      setError(result.error || 'Errore nella creazione.');
       setLoading(false);
       return;
-    }
-
-    const validItems = checklist.map((t) => t.trim()).filter(Boolean);
-    if (validItems.length > 0) {
-      await supabase.from('event_checklist_items').insert(
-        validItems.map((text) => ({
-          event_id: event.id,
-          text,
-        }))
-      );
     }
 
     router.push('/calendar');

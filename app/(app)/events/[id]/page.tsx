@@ -25,49 +25,45 @@ export default function EventDetailPage() {
 
   useEffect(() => {
     async function load() {
-      const { data: ev } = await supabase.from('events').select('*').eq('id', id).single();
-      setEvent(ev);
-      if (ev) {
-        const { data: items } = await supabase
-          .from('event_checklist_items')
-          .select('*')
-          .eq('event_id', id)
-          .order('created_at', { ascending: true });
-        setChecklist(items ?? []);
-
-        const { data: mem } = await supabase
-          .from('memories')
-          .select('*')
-          .eq('event_id', id)
-          .maybeSingle();
-        setMemory(mem);
-        if (mem) {
-          setMemoryTitle(mem.title);
-          setMemoryNote(mem.note || '');
+      const res = await fetch(`/api/events/${id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setEvent(data.event);
+        setChecklist(data.checklist || []);
+        setMemory(data.memory);
+        if (data.memory) {
+          setMemoryTitle(data.memory.title);
+          setMemoryNote(data.memory.note || '');
         }
       }
       setLoading(false);
     }
     load();
-  }, [id, supabase]);
+  }, [id]);
 
   async function toggleChecklist(item: EventChecklistItem) {
-    const { data } = await supabase
-      .from('event_checklist_items')
-      .update({ is_done: !item.is_done })
-      .eq('id', item.id)
-      .select()
-      .single();
-    if (data) {
-      setChecklist((prev) => prev.map((i) => (i.id === item.id ? data : i)));
+    const res = await fetch(`/api/checklist/${item.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_done: !item.is_done }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setChecklist((prev) => prev.map((i) => (i.id === item.id ? data.item : i)));
     }
   }
 
   async function markDone() {
     if (!event) return;
     setSaving(true);
-    await supabase.from('events').update({ status: 'done' }).eq('id', event.id);
-    setEvent({ ...event, status: 'done' });
+    const res = await fetch(`/api/events/${event.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'done' }),
+    });
+    if (res.ok) {
+      setEvent({ ...event, status: 'done' });
+    }
     setSaving(false);
   }
 
@@ -91,26 +87,23 @@ export default function EventDetailPage() {
       }
     }
 
-    if (memory) {
-      await supabase
-        .from('memories')
-        .update({ title: memoryTitle, note: memoryNote, photo_url: photoUrl })
-        .eq('id', memory.id);
-      setMemory({ ...memory, title: memoryTitle, note: memoryNote, photo_url: photoUrl });
-    } else {
-      const { data: newMem } = await supabase
-        .from('memories')
-        .insert({
-          couple_id: event.couple_id,
-          event_id: event.id,
-          title: memoryTitle,
-          note: memoryNote,
-          photo_url: photoUrl,
-          created_by: userId,
-        })
-        .select()
-        .single();
-      if (newMem) setMemory(newMem);
+    const res = await fetch('/api/memories', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: memory?.id,
+        couple_id: event.couple_id,
+        event_id: event.id,
+        title: memoryTitle,
+        note: memoryNote,
+        photo_url: photoUrl,
+        user_id: userId,
+      }),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      setMemory(data.memory);
     }
     setSaving(false);
   }
@@ -118,8 +111,10 @@ export default function EventDetailPage() {
   async function deleteEvent() {
     if (!event) return;
     if (!confirm('Eliminare questo evento?')) return;
-    await supabase.from('events').delete().eq('id', event.id);
-    router.push('/calendar');
+    const res = await fetch(`/api/events/${event.id}`, { method: 'DELETE' });
+    if (res.ok) {
+      router.push('/calendar');
+    }
   }
 
   if (loading) return <div className="py-12 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" /></div>;

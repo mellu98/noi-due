@@ -25,6 +25,11 @@ export async function middleware(request: NextRequest) {
           response.cookies.set({ name, value: '', ...options });
         },
       },
+      cookieOptions: {
+        httpOnly: false,
+        sameSite: 'lax',
+        secure: true,
+      },
     }
   );
 

@@ -6,13 +6,22 @@ type GlobalWithSupabase = typeof globalThis & {
   __supabaseBrowserClient?: SupabaseClient;
 };
 
+function getTokenFromStorage(): string | null {
+  try {
+    const raw = localStorage.getItem('sb-wzcauthqplvdvtfquhag-auth-token');
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed?.access_token || null;
+  } catch {
+    return null;
+  }
+}
+
 export function createClient() {
   const g = globalThis as GlobalWithSupabase;
   if (g.__supabaseBrowserClient) {
-    console.log('[CLIENT] Reusing existing singleton');
     return g.__supabaseBrowserClient;
   }
-  console.log('[CLIENT] Creating NEW supabase client');
 
   const client = createSupabaseClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -20,10 +29,14 @@ export function createClient() {
     {
       global: {
         fetch: (input: RequestInfo | URL, init?: RequestInit) => {
-          const url = input.toString();
-          const headers = init?.headers as Record<string, string> | undefined;
-          console.log('[FETCH]', url.substring(0, 80), 'auth:', headers?.['Authorization']?.substring(0, 30) || 'NONE');
-          return fetch(input, init);
+          const headers = new Headers(init?.headers);
+          if (!headers.has('Authorization')) {
+            const token = getTokenFromStorage();
+            if (token) {
+              headers.set('Authorization', `Bearer ${token}`);
+            }
+          }
+          return fetch(input, { ...init, headers });
         },
       },
     }

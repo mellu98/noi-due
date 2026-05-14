@@ -13,9 +13,22 @@ export function createClient() {
     return g.__supabaseBrowserClient;
   }
   console.log('[CLIENT] Creating NEW supabase client');
-  g.__supabaseBrowserClient = createSupabaseClient(
+
+  const client = createSupabaseClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      global: {
+        fetch: (input: RequestInfo | URL, init?: RequestInit) => {
+          const url = input.toString();
+          const headers = init?.headers as Record<string, string> | undefined;
+          console.log('[FETCH]', url.substring(0, 80), 'auth:', headers?.['Authorization']?.substring(0, 30) || 'NONE');
+          return fetch(input, init);
+        },
+      },
+    }
   );
-  return g.__supabaseBrowserClient;
+
+  g.__supabaseBrowserClient = client;
+  return client;
 }

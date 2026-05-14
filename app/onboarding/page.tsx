@@ -31,6 +31,14 @@ export default function OnboardingPage() {
       router.push('/login');
       return;
     }
+    // FIX: Force the client to activate the session so REST headers are set
+    if (sessionData.session) {
+      await supabase.auth.setSession({
+        access_token: sessionData.session.access_token,
+        refresh_token: sessionData.session.refresh_token,
+      });
+      console.log('[ONBOARDING] Session forced into client');
+    }
     console.log('[ONBOARDING] user id:', user.id);
 
     const code = Math.random().toString(36).substring(2, 8).toUpperCase();

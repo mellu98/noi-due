@@ -12,6 +12,13 @@ export default function AppLayout({
   const supabase = createClient();
 
   useEffect(() => {
+    // Forza il caricamento della sessione da localStorage
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.access_token) {
+        document.cookie = `sb-auth-token=${session.access_token}; path=/; SameSite=Lax; Secure`;
+      }
+    });
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {

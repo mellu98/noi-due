@@ -21,10 +21,12 @@ export default function OnboardingPage() {
     setLoading(true);
     setError('');
 
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) {
-      setError('Sessione scaduta. Ricarica la pagina.');
+    const { data: sessionData } = await supabase.auth.getSession();
+    const user = sessionData.session?.user;
+    if (!user) {
+      setError('Sessione scaduta. Effettua il login.');
       setLoading(false);
+      router.push('/login');
       return;
     }
 
@@ -32,7 +34,7 @@ export default function OnboardingPage() {
 
     const { data: couple, error: coupleError } = await supabase
       .from('couples')
-      .insert({ name: coupleName, invite_code: code, created_by: userData.user.id })
+      .insert({ name: coupleName, invite_code: code, created_by: user.id })
       .select()
       .single();
 
@@ -44,7 +46,7 @@ export default function OnboardingPage() {
 
     const { error: memberError } = await supabase.from('couple_members').insert({
       couple_id: couple.id,
-      user_id: userData.user.id,
+      user_id: user.id,
       role: 'admin',
     });
 
@@ -62,10 +64,12 @@ export default function OnboardingPage() {
     setLoading(true);
     setError('');
 
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) {
-      setError('Sessione scaduta. Ricarica la pagina.');
+    const { data: sessionData } = await supabase.auth.getSession();
+    const user = sessionData.session?.user;
+    if (!user) {
+      setError('Sessione scaduta. Effettua il login.');
       setLoading(false);
+      router.push('/login');
       return;
     }
 
@@ -83,7 +87,7 @@ export default function OnboardingPage() {
 
     const { error: memberError } = await supabase.from('couple_members').insert({
       couple_id: couple.id,
-      user_id: userData.user.id,
+      user_id: user.id,
       role: 'member',
     });
 

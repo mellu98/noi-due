@@ -22,12 +22,15 @@ export default function LoginPage() {
     setError('');
 
     const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password });
-    console.log('[LOGIN] signIn result:', { error: error?.message, session: !!signInData.session, tokenPrefix: signInData.session?.access_token?.substring(0, 20) });
-
     if (error) {
       setError(error.message);
       setLoading(false);
       return;
+    }
+
+    // Save token in cookie so server components can auth too
+    if (signInData.session?.access_token) {
+      document.cookie = `sb-auth-token=${signInData.session.access_token}; path=/; SameSite=Lax; Secure`;
     }
 
     router.push('/');

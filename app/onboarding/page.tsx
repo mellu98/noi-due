@@ -21,7 +21,9 @@ export default function OnboardingPage() {
     setLoading(true);
     setError('');
 
-    const { data: sessionData } = await supabase.auth.getSession();
+    console.log('[ONBOARDING] Getting session...');
+    const { data: sessionData, error: sessionErr } = await supabase.auth.getSession();
+    console.log('[ONBOARDING] session:', { present: !!sessionData.session, error: sessionErr?.message });
     const user = sessionData.session?.user;
     if (!user) {
       setError('Sessione scaduta. Effettua il login.');
@@ -29,14 +31,17 @@ export default function OnboardingPage() {
       router.push('/login');
       return;
     }
+    console.log('[ONBOARDING] user id:', user.id);
 
     const code = Math.random().toString(36).substring(2, 8).toUpperCase();
 
+    console.log('[ONBOARDING] Inserting couple with created_by:', user.id);
     const { data: couple, error: coupleError } = await supabase
       .from('couples')
       .insert({ name: coupleName, invite_code: code, created_by: user.id })
       .select()
       .single();
+    console.log('[ONBOARDING] couple result:', { data: !!couple, error: coupleError?.message });
 
     if (coupleError || !couple) {
       setError(coupleError?.message || 'Errore nella creazione della coppia.');

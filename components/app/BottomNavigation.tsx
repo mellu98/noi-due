@@ -6,7 +6,7 @@ import { Home, CalendarDays, Lightbulb, ImageIcon, Settings } from 'lucide-react
 import { clsx } from 'clsx';
 
 const links = [
-  { href: '/dashboard', label: 'Home', icon: Home },
+  { href: '/', label: 'Home', icon: Home },
   { href: '/calendar', label: 'Calendario', icon: CalendarDays },
   { href: '/ideas', label: 'Idee', icon: Lightbulb },
   { href: '/memories', label: 'Ricordi', icon: ImageIcon },

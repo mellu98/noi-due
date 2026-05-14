@@ -54,7 +54,7 @@ export default function OnboardingPage() {
       return;
     }
 
-    router.push('/dashboard');
+    router.push('/');
   }
 
   async function handleJoin(e: React.FormEvent) {
@@ -93,7 +93,7 @@ export default function OnboardingPage() {
       return;
     }
 
-    router.push('/dashboard');
+    router.push('/');
   }
 
   if (mode === 'choose') {

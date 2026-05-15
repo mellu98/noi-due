@@ -33,5 +33,9 @@ export async function notifyPartner(
     message,
   }));
 
-  await supabaseAdmin.from('notifications').insert(notifications);
+  try {
+    await supabaseAdmin.from('notifications').insert(notifications);
+  } catch {
+    // Tabella notifications potrebbe non esistere ancora; ignora silenziosamente
+  }
 }

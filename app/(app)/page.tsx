@@ -9,6 +9,7 @@ import { EmptyState } from '@/components/app/EmptyState';
 
 import { MemoryCard } from '@/components/app/MemoryCard';
 import { RandomIdeaButton } from '@/components/app/RandomIdeaButton';
+import { DaysTogetherCard } from '@/components/app/DaysTogetherCard';
 import Link from 'next/link';
 import { Plus, CalendarHeart, ImageOff } from 'lucide-react';
 
@@ -35,6 +36,12 @@ export default async function DashboardPage() {
     .from('profiles')
     .select('full_name')
     .eq('id', user.id)
+    .single();
+
+  const { data: couple } = await supabase
+    .from('couples')
+    .select('created_at')
+    .eq('id', coupleId)
     .single();
 
   const { data: events } = await supabase
@@ -72,6 +79,8 @@ export default async function DashboardPage() {
         </h1>
         <p className="text-sm text-muted-foreground">Ecco come va il vostro percorso.</p>
       </header>
+
+      {couple && <DaysTogetherCard createdAt={couple.created_at} />}
 
       {nextEvent ? (
         <CountdownCard event={nextEvent} />

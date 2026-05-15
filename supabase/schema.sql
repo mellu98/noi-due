@@ -89,6 +89,17 @@ CREATE TABLE reminders (
   created_at timestamp with time zone DEFAULT now()
 );
 
+-- Notifications
+CREATE TABLE notifications (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES profiles(id) ON DELETE CASCADE,
+  type text NOT NULL,
+  title text NOT NULL,
+  message text,
+  read boolean DEFAULT false,
+  created_at timestamp with time zone DEFAULT now()
+);
+
 -- Triggers per updated_at
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
@@ -110,6 +121,7 @@ ALTER TABLE event_checklist_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE date_ideas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE memories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE reminders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 
 -- Helper: evita ricorsione infinita nelle policy su couple_members
 CREATE OR REPLACE FUNCTION public.get_my_couple_ids()
@@ -257,6 +269,13 @@ CREATE POLICY "memories_delete" ON memories
   FOR DELETE USING (
     couple_id IN (SELECT public.get_my_couple_ids())
   );
+
+-- Notifications: solo il destinatario
+CREATE POLICY "notifications_select_own" ON notifications
+  FOR SELECT USING (user_id = auth.uid());
+
+CREATE POLICY "notifications_update_own" ON notifications
+  FOR UPDATE USING (user_id = auth.uid());
 
 -- Reminders: solo membri della coppia
 CREATE POLICY "reminders_select" ON reminders

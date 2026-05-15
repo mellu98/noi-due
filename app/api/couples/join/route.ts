@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
 
     const { data: couple, error: findError } = await supabaseAdmin
       .from('couples')
-      .select('id')
+      .select('id, created_by')
       .eq('invite_code', invite_code.trim().toUpperCase())
       .single();
 
@@ -32,6 +32,24 @@ export async function POST(req: NextRequest) {
 
     if (memberError) {
       return NextResponse.json({ error: memberError.message }, { status: 500 });
+    }
+
+    // Notifica il creatore della coppia
+    if (couple.created_by && couple.created_by !== user_id) {
+      const { data: newUserProfile } = await supabaseAdmin
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user_id)
+        .single();
+
+      const partnerName = newUserProfile?.full_name || 'Il tuo partner';
+
+      await supabaseAdmin.from('notifications').insert({
+        user_id: couple.created_by,
+        type: 'partner_joined',
+        title: `${partnerName} si è unito alla coppia!`,
+        message: 'Ora potete iniziare a pianificare insieme su NoiDue.',
+      });
     }
 
     return NextResponse.json({ success: true });

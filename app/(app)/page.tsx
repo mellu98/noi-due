@@ -10,6 +10,7 @@ import { EmptyState } from '@/components/app/EmptyState';
 import { MemoryCard } from '@/components/app/MemoryCard';
 import { RandomIdeaButton } from '@/components/app/RandomIdeaButton';
 import { DaysTogetherCard } from '@/components/app/DaysTogetherCard';
+import { TutorialOverlay } from '@/components/app/TutorialOverlay';
 import Link from 'next/link';
 import { Plus, CalendarHeart, ImageOff } from 'lucide-react';
 
@@ -72,7 +73,9 @@ export default async function DashboardPage() {
   else if (hour < 18) greeting = 'Buon pomeriggio';
 
   return (
-    <div className="space-y-6">
+    <>
+      <TutorialOverlay />
+      <div className="space-y-6">
       <header>
         <h1 className="text-2xl font-bold text-foreground">
           {greeting}, {profile?.full_name?.split(' ')[0] || 'tesoro'}
@@ -135,6 +138,7 @@ export default async function DashboardPage() {
           />
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 }

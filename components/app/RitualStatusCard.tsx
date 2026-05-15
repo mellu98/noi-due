@@ -54,9 +54,14 @@ function RitualItem({ type, ritual }: { type: string; ritual: RitualState }) {
 export function RitualStatusCard({ state }: RitualStatusCardProps) {
   return (
     <div className="space-y-3">
-      <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-        Regola 2/2/2
-      </h2>
+      <div>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+          Regola 2/2/2
+        </h2>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          Un appuntamento ogni 2 settimane, una fuga ogni 2 mesi, un viaggio ogni 2 anni.
+        </p>
+      </div>
       <div className="space-y-2">
         <RitualItem type="date" ritual={state.date} />
         <RitualItem type="escape" ritual={state.escape} />

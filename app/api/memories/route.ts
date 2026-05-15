@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { notifyPartner } from '@/lib/utils/notifications';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -33,6 +34,16 @@ export async function POST(req: NextRequest) {
       .select()
       .single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    await notifyPartner(
+      supabaseAdmin,
+      couple_id,
+      user_id,
+      'memory_added',
+      '{name} ha aggiunto un ricordo',
+      `"${title}" è stato salvato tra i ricordi della coppia.`
+    );
+
     return NextResponse.json({ success: true, memory: data });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });

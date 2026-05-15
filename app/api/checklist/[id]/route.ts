@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { notifyPartner } from '@/lib/utils/notifications';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -11,7 +12,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   try {
     const { id } = await params;
     const body = await req.json();
-    const { is_done } = body;
+    const { is_done, user_id } = body;
+
     const { data, error } = await supabaseAdmin
       .from('event_checklist_items')
       .update({ is_done })
@@ -19,6 +21,26 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       .select()
       .single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    if (is_done && user_id) {
+      const { data: event } = await supabaseAdmin
+        .from('events')
+        .select('couple_id, title')
+        .eq('id', data.event_id)
+        .single();
+
+      if (event) {
+        await notifyPartner(
+          supabaseAdmin,
+          event.couple_id,
+          user_id,
+          'checklist_completed',
+          '{name} ha completato un punto della checklist',
+          `Checklist aggiornata per "${event.title}".`
+        );
+      }
+    }
+
     return NextResponse.json({ success: true, item: data });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });

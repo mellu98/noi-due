@@ -42,10 +42,14 @@ export default function EventDetailPage() {
   }, [id]);
 
   async function toggleChecklist(item: EventChecklistItem) {
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData.user?.id;
+    if (!userId) return;
+
     const res = await fetch(`/api/checklist/${item.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ is_done: !item.is_done }),
+      body: JSON.stringify({ is_done: !item.is_done, user_id: userId }),
     });
     if (res.ok) {
       const data = await res.json();
@@ -56,10 +60,17 @@ export default function EventDetailPage() {
   async function markDone() {
     if (!event) return;
     setSaving(true);
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData.user?.id;
+    if (!userId) {
+      setSaving(false);
+      return;
+    }
+
     const res = await fetch(`/api/events/${event.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'done' }),
+      body: JSON.stringify({ status: 'done', user_id: userId }),
     });
     if (res.ok) {
       setEvent({ ...event, status: 'done' });

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { notifyPartner } from '@/lib/utils/notifications';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -43,6 +44,15 @@ export async function POST(req: NextRequest) {
         validItems.map((text: string) => ({ event_id: event.id, text }))
       );
     }
+
+    await notifyPartner(
+      supabaseAdmin,
+      couple_id,
+      user_id,
+      'event_created',
+      '{name} ha pianificato un nuovo evento',
+      `"${event.title}" è stato aggiunto al calendario.`
+    );
 
     return NextResponse.json({ success: true, event });
   } catch (err: any) {
